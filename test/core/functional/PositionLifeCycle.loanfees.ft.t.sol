@@ -21,7 +21,7 @@ abstract contract LoanFeesAbstractPositionLifeCycleFunctional is AbstractPositio
 contract LoanFeesPositionLifeCycleAaveArbitrumFunctional is LoanFeesAbstractPositionLifeCycleFunctional {
 
     function setUp() public {
-        super.setUp(Network.Arbitrum, MM_AAVE, WETH, USDC, WETH_STABLE_MULTIPLIER);
+        super.setUp(Network.Arbitrum, MM_AAVE, WETH, USDC, 0);
     }
 
 }
@@ -29,7 +29,7 @@ contract LoanFeesPositionLifeCycleAaveArbitrumFunctional is LoanFeesAbstractPosi
 contract LoanFeesPositionLifeCycleAaveOptimismFunctional is LoanFeesAbstractPositionLifeCycleFunctional {
 
     function setUp() public {
-        super.setUp(Network.Optimism, MM_AAVE, WETH, USDC, WETH_STABLE_MULTIPLIER);
+        super.setUp(Network.Optimism, MM_AAVE, WETH, USDC, 0);
     }
 
 }
@@ -37,7 +37,7 @@ contract LoanFeesPositionLifeCycleAaveOptimismFunctional is LoanFeesAbstractPosi
 contract LoanFeesPositionLifeCycleAavePolygonFunctional is LoanFeesAbstractPositionLifeCycleFunctional {
 
     function setUp() public {
-        super.setUp(Network.Polygon, MM_AAVE, WETH, USDC, WETH_STABLE_MULTIPLIER);
+        super.setUp(Network.Polygon, MM_AAVE, WETH, USDC, 0);
     }
 
 }
@@ -45,7 +45,7 @@ contract LoanFeesPositionLifeCycleAavePolygonFunctional is LoanFeesAbstractPosit
 contract LoanFeesPositionLifeCycleExactlyOptimismFunctional is LoanFeesAbstractPositionLifeCycleFunctional {
 
     function setUp() public {
-        super.setUp(Network.Optimism, MM_EXACTLY, WETH, USDC, WETH_STABLE_MULTIPLIER);
+        super.setUp(Network.Optimism, MM_EXACTLY, WETH, USDC, 0);
     }
 
 }

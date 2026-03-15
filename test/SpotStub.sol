@@ -64,7 +64,7 @@ contract SpotStub is StdCheats {
 
     function movePrice(address oracle, string memory token, int256 percentage) public returns (int256 newPrice) {
         require(percentage >= -1e18 && percentage <= 10e18, "Invalid percentage");
-        (, int256 currentPrice,,,) = IAggregatorV2V3(oracle).latestRoundData();
+        int256 currentPrice = IAggregatorV2V3(oracle).latestAnswer();
         newPrice = currentPrice * (percentage + 1e18) / 1e18;
         stubChainlinkPrice(newPrice, oracle);
 

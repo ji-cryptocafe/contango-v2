@@ -8,7 +8,24 @@ import "./TestSetup.t.sol";
 import "./dependencies/Strings2.sol";
 
 import "src/core/Contango.sol";
-import "src/moneymarkets/ContangoLens.sol";
+
+struct Prices {
+    uint256 collateral;
+    uint256 debt;
+    uint256 unit;
+}
+
+struct Balances {
+    uint256 collateral;
+    uint256 debt;
+}
+
+struct Limits {
+    uint256 minBorrowing;
+    uint256 maxBorrowing;
+    uint256 minLending;
+    uint256 maxLending;
+}
 
 struct TSQuote {
     TradeParams tradeParams;
@@ -89,14 +106,12 @@ contract TSQuoter {
     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     Contango internal immutable contango;
-    ContangoLens public immutable contangoLens;
 
     IERC7399[] public flashLoanProviders;
     LiquidityBuffer public liquidityBuffer;
 
-    constructor(Contango _contango, ContangoLens _contangoLens) {
+    constructor(Contango _contango) {
         contango = _contango;
-        contangoLens = _contangoLens;
     }
 
     function addFlashLoanProvider(IERC7399 _provider) external {
@@ -156,16 +171,8 @@ contract TSQuoter {
                 }),
                 closingOnly: instrument.closingOnly
             });
-            tsQuoteParams.meta.balances = contangoLens.balances(positionId);
-            tsQuoteParams.meta.prices = contangoLens.prices(positionId);
         }
 
-        (tsQuoteParams.meta.liquidity.borrowingLiquidity, tsQuoteParams.meta.liquidity.lendingLiquidity) =
-            contangoLens.liquidity(positionId);
-
-        tsQuoteParams.meta.limits = contangoLens.limits(positionId);
-
-        (tsQuoteParams.meta.ltv.ltv, tsQuoteParams.meta.ltv.liquidationThreshold) = contangoLens.thresholds(positionId);
         tsQuoteParams.quantity = quantity;
         tsQuoteParams.leverage = leverage;
         tsQuoteParams.cashflow = cashflow;
@@ -181,13 +188,7 @@ contract TSQuoter {
             if (quantity > 0 && flashBorrowSupported) {
                 tsQuoteParams.flashFee = 0;
             } else {
-                // // TODO be smarter
-                // (IERC7399 _provider, uint256 minFee) = _flashLoanProvider(instrument.base, quantity.abs());
-                // tsQuoteParams.flashLoanProvider = _provider;
-                // // TODO check this math
-                // tsQuoteParams.flashFee = minFee * quantity.abs() / instrument.baseUnit;
                 tsQuoteParams.flashLoanProvider = flashLoanProviders[0];
-                // TODO hack to get flash loan fee in WAD %
                 uint256 flashFee = tsQuoteParams.flashLoanProvider.flashFee(address(instrument.base), 10 ** instrument.base.decimals());
                 tsQuoteParams.flashFee = instrument.base.decimals() == 18
                     ? flashFee
@@ -223,12 +224,6 @@ contract TSQuoter {
         for (uint256 i = 0; i < flashLoanProviders.length; i++) {
             IERC7399 p = flashLoanProviders[i];
             uint256 fee = p.flashFee(address(asset), amount);
-
-            console.log("asset", address(asset));
-            console.log("amount", amount);
-            console.log("fee", fee);
-            console.log("minFee", minFee);
-            console.log("p", address(p));
 
             if (fee < minFee) {
                 minFee = fee;

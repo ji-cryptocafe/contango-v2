@@ -2,7 +2,12 @@
 pragma solidity ^0.8.10;
 
 import { IERC20Metadata as IERC20 } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import { IAggregatorV2V3 } from "../../../dependencies/Chainlink.sol";
+interface IAggregatorV2V3 {
+
+    function latestAnswer() external view returns (int256);
+    function decimals() external view returns (uint8);
+
+}
 
 interface IAaveRewardsController {
 

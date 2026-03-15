@@ -6,7 +6,7 @@ import { IERC20Metadata as IERC20 } from "@openzeppelin/contracts/token/ERC20/ex
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
-import "src/dependencies/Chainlink.sol";
+import "../dependencies/Chainlink.sol";
 import "../dependencies/Uniswap.sol";
 
 contract UniswapPoolStub {

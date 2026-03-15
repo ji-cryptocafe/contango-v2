@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import "src/dependencies/Chainlink.sol";
+import { IAggregatorV2V3 } from "../dependencies/Chainlink.sol";
 
 contract ChainlinkAggregatorV2V3Mock is IAggregatorV2V3 {
+
+    event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt);
 
     uint8 public override decimals;
     int256 public price;
@@ -24,22 +26,21 @@ contract ChainlinkAggregatorV2V3Mock is IAggregatorV2V3 {
 
     // V3
 
-    function aggregator() external view override returns (address) {
+    function aggregator() external view returns (address) {
         return address(this);
     }
 
-    function description() external pure override returns (string memory) {
+    function description() external pure returns (string memory) {
         return "ChainlinkAggregatorV2V3Mock";
     }
 
-    function version() external pure override returns (uint256) {
+    function version() external pure returns (uint256) {
         return 3;
     }
 
     function getRoundData(uint80 roundId)
         external
         view
-        override
         returns (uint80 roundId_, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
         return (roundId, price, block.timestamp, block.timestamp, 0);
@@ -48,7 +49,6 @@ contract ChainlinkAggregatorV2V3Mock is IAggregatorV2V3 {
     function latestRoundData()
         external
         view
-        override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
         return (_roundId, price, block.timestamp, block.timestamp, _roundId);
@@ -60,19 +60,19 @@ contract ChainlinkAggregatorV2V3Mock is IAggregatorV2V3 {
         return price;
     }
 
-    function latestTimestamp() external view override returns (uint256) {
+    function latestTimestamp() external view returns (uint256) {
         return block.timestamp;
     }
 
-    function latestRound() external view override returns (uint256) {
+    function latestRound() external view returns (uint256) {
         return _roundId;
     }
 
-    function getAnswer(uint256) external view override returns (int256) {
+    function getAnswer(uint256) external view returns (int256) {
         return price;
     }
 
-    function getTimestamp(uint256) external view override returns (uint256) {
+    function getTimestamp(uint256) external view returns (uint256) {
         return block.timestamp;
     }
 

@@ -24,7 +24,7 @@ contract AaveMoneyMarketArbitrumTest is Test {
         contango = address(env.contango());
 
         sut = env.deployer().deployAaveMoneyMarket(env, IContango(contango));
-        pool = AaveMoneyMarketView(address(sut)).pool();
+        pool = AaveMoneyMarket(address(sut)).pool();
         env.createInstrument(env.erc20(WETH), env.erc20(USDC));
 
         positionId = env.encoder().encodePositionId(Symbol.wrap("WETHUSDC"), MM_AAVE, PERP, 1);

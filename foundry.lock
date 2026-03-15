@@ -1,0 +1,26 @@
+{
+  "lib/chainlist": {
+    "rev": "d0d752221c76f5dcc7109bbe5d1d0dc5ecb319f4"
+  },
+  "lib/erc721-permit2": {
+    "rev": "88a4649c3016ff1e664571edc101058b11c8eaa4"
+  },
+  "lib/erc7399": {
+    "rev": "501ffde75d80e34915a4884ecd24cd59222b60d2"
+  },
+  "lib/forge-gas-snapshot": {
+    "rev": "1a5804e001531d580813d94e1a0f2853467202e6"
+  },
+  "lib/forge-std": {
+    "rev": "52715a217dc51d0de15877878ab8213f6cbbbab5"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "17c1a3a4584e2cbbca4131f2f1d16168c92f2310"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "rev": "f34a3a7e5a1d698d87d517fda698d48286310bee"
+  },
+  "lib/prb-math": {
+    "rev": "77fa88eda4a4a91b3f3e9431df291292c26b6c71"
+  }
+}

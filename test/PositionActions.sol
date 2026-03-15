@@ -282,8 +282,6 @@ contract PositionActions is GasSnapshot {
             IERC20 _cashflowToken = cashflowCcy == Currency.Quote ? instrument.quote : instrument.base;
             if (_cashflowToken == nativeTokenWrapper) {
                 VM.deal(trader, uint256(cashflowUsed));
-            } else if (usePermit) {
-                signedPermit = env.dealAndPermit(_cashflowToken, trader, traderPk, uint256(cashflowUsed), address(env.vault()));
             } else {
                 env.dealAndApprove(_cashflowToken, trader, uint256(cashflowUsed), address(env.vault()));
             }
@@ -315,8 +313,7 @@ contract PositionActions is GasSnapshot {
         if (bytes(testName).length > 0) snapStart(_testName);
 
         if (params.cashflow > 0) {
-            if (signedPermit.amount > 0) maestro.depositWithPermit(_cashflowToken, signedPermit, uint256(params.cashflow));
-            else if (value > 0) maestro.depositNative{ value: value }();
+            if (value > 0) maestro.depositNative{ value: value }();
             else maestro.deposit(_cashflowToken, uint256(params.cashflow));
         }
         (positionId_, trade) = maestro.trade(params, executionParams);

@@ -24,7 +24,7 @@ contract AaveMoneyMarketMainnetLidoTest is Test {
         contango = address(env.contango());
 
         sut = env.deployer().deployAaveLidoMoneyMarket(env, IContango(contango));
-        pool = AaveMoneyMarketView(address(sut)).pool();
+        pool = AaveMoneyMarket(address(sut)).pool();
         env.createInstrument(env.erc20(WSTETH), env.erc20(WETH));
 
         positionId = env.encoder().encodePositionId(Symbol.wrap("WSTETHETH"), MM_AAVE_LIDO, PERP, 1);
