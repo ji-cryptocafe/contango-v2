@@ -17,6 +17,7 @@ import "src/moneymarkets/aave/dependencies/IPoolAddressesProvider.sol";
 import "src/moneymarkets/morpho/MorphoBlueMoneyMarket.sol";
 import "src/security/RouterGuard.sol";
 import "src/security/AccessGate.sol";
+import "src/security/TradeLimits.sol";
 
 import "script/constants.sol";
 import "script/Addresses.s.sol";
@@ -229,7 +230,8 @@ contract Deployer is Addresses {
         deployment.vault = deployVault(env);
         RouterGuard routerGuard = new RouterGuard();
         AccessGate accessGate = new AccessGate();
-        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor(routerGuard), accessGate, TIMELOCK);
+        TradeLimits tradeLimits = new TradeLimits();
+        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor(routerGuard), accessGate, tradeLimits, TIMELOCK);
 
         VM.startPrank(TIMELOCK_ADDRESS);
         deployment.contango.grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);

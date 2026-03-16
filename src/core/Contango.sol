@@ -12,6 +12,7 @@ import "../interfaces/IContango.sol";
 
 import "../utils/SpotExecutor.sol";
 import "../security/AccessGate.sol";
+import "../security/TradeLimits.sol";
 
 import "../libraries/ERC20Lib.sol";
 import "../libraries/Errors.sol";
@@ -57,18 +58,28 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
     IUnderlyingPositionFactory public immutable positionFactory;
     SpotExecutor public immutable spotExecutor;
     AccessGate public immutable accessGate;
+    TradeLimits public immutable tradeLimits;
 
     bytes32 private callbackHash;
     bytes32 private tradeHash;
     mapping(PositionId positionId => address owner) public lastOwner;
     mapping(Symbol symbol => InstrumentStorage instrument) private instruments;
 
-    constructor(PositionNFT nft, IVault v, IUnderlyingPositionFactory pf, SpotExecutor spot, AccessGate gate, Timelock timelock) {
+    constructor(
+        PositionNFT nft,
+        IVault v,
+        IUnderlyingPositionFactory pf,
+        SpotExecutor spot,
+        AccessGate gate,
+        TradeLimits _tradeLimits,
+        Timelock timelock
+    ) {
         positionNFT = nft;
         vault = v;
         positionFactory = pf;
         spotExecutor = spot;
         accessGate = gate;
+        tradeLimits = _tradeLimits;
         _grantRole(DEFAULT_ADMIN_ROLE, Timelock.unwrap(timelock));
     }
 
@@ -113,9 +124,14 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
     {
         _requireNotPaused();
         accessGate.requireWhitelisted(onBehalfOf);
+        tradeLimits.validateTradeSize(tradeParams.quantity > 0 ? uint256(tradeParams.quantity) : uint256(-tradeParams.quantity));
+        tradeLimits.recordAndValidateVolume(onBehalfOf, execParams.swapAmount);
+
         address owner;
         positionId = tradeParams.positionId;
+        bool isNewPosition = tradeParams.quantity > 0 && tradeParams.positionId.getNumber() == 0;
         if (tradeParams.quantity > 0) {
+            if (isNewPosition) tradeLimits.incrementOpenPositions(onBehalfOf);
             owner = onBehalfOf;
             (positionId, trade_) = _open(tradeParams, execParams, onBehalfOf);
         } else if (tradeParams.quantity < 0) {
@@ -302,6 +318,7 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
         if (cb.fullyClosing) {
             lastOwner[tradeParams.positionId] = owner;
             positionNFT.burn(tradeParams.positionId);
+            tradeLimits.decrementOpenPositions(owner);
         }
     }
 
