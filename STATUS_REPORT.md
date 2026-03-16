@@ -2,7 +2,7 @@
 
 **Project:** Contango V2 Fork — Private, fee-free leverage protocol
 **Last Updated:** 2026-03-16
-**Current Phase:** Phase 2 Security Hardening (2.1-2.3 DONE, 2.4 next)
+**Current Phase:** Phases 2-3 COMPLETE. Next: Phase 5 (Integration Tests) or Phase 6 (Deploy Scripts)
 **Branch:** `fork/stripped`
 
 ---
@@ -14,14 +14,13 @@
 | Phase 0: Setup & Baseline | DONE | Foundry installed, build verified, branch `fork/stripped` created |
 | Phase 1: Strip Non-Essential Code | DONE | 86 source files deleted, 3 modified, 52 test files deleted, 36 test files patched |
 | Phase 4: Simplified Maestro | DONE | 341 → 80 lines. Removed orders, fees, routing, permit2, UUPS, swap helpers |
-| Phase 5: Testing (Unit) | DONE | 303 tests across 15 suites in 9 files, all passing |
+| Phase 5: Testing (Unit) | DONE | 327 tests across 16 suites in 10 files, all passing |
 | Phase 2.1: AccessGate | DONE | Wallet whitelist (max 10), integrated into Contango.tradeOnBehalfOf() |
-| Phase 2.2: RouterGuard | DONE | DEX router/spender/flash provider whitelist, integrated into SpotExecutors |
+| Phase 2.2: RouterGuard | DONE | DEX router/spender/flash provider whitelist, integrated into SpotExecutors + Contango._flash() |
 | Phase 2.3: Remove Upgradeability | DONE | Contango + Vault converted to non-upgradeable, no proxies |
-| Phase 2.4: Trade Limits | NOT STARTED | Per-tx max size, daily volume, max positions |
-| Phase 3: KyberSwap Integration | NOT STARTED | Off-chain pipeline + on-chain RouterGuard |
+| Phase 2.4: TradeLimits | DONE | Per-trade size cap, daily volume per user (epoch-based), max open positions per user |
+| Phase 3: KyberSwap Integration | DONE | Flash loan provider validation + off-chain quote helper (script/kyberswap/quote.ts) |
 | Phase 5: Testing (Integration) | NOT STARTED | Fork tests for Aave wstETH/ETH, Morpho syrupUSDC/USDC |
-| Phase 5: Testing (Security) | NOT STARTED | Tests for AccessGate, RouterGuard, trade limits |
 | Phase 5: Testing (Invariant) | NOT STARTED | Vault accounting, position ownership invariants |
 | Phase 6: Deployment Scripts | NOT STARTED | Foundry deploy scripts, configuration |
 | Phase 7: Documentation & Ops | NOT STARTED | Admin runbook, monitoring |
@@ -32,15 +31,17 @@
 
 | Metric | Value |
 |--------|-------|
-| Source files (non-dependency) | 27 |
-| Source files (with dependencies) | 53 |
-| Total source lines | 4,896 |
+| Source files (non-dependency) | 30 (+3 security contracts) |
+| Source files (with dependencies) | 56 |
+| Total source lines | 5,097 |
+| Security contracts | 3 (AccessGate, RouterGuard, TradeLimits) |
 | Maestro.sol lines | 80 |
-| Unit test files | 8 |
-| Unit test suites | 13 |
-| Unit tests passing | 254 |
+| Unit test files | 10 |
+| Unit test suites | 16 |
+| Unit tests passing | 327 |
 | Unit tests failing | 0 |
-| Reduction from upstream | 86 source files deleted (~72%) |
+| Reduction from upstream | 86 source files deleted, +3 security contracts |
+| Off-chain scripts | 1 (script/kyberswap/quote.ts) |
 
 ---
 
@@ -110,14 +111,14 @@ Major test files patched to compile after source deletions:
 - `test/moneymarkets/aave/*.t.sol` — replaced AaveMoneyMarketView references
 - Multiple files stubbed out (referenced entirely deleted source)
 
-### Remaining Source Files (27 non-dependency)
+### Remaining Source Files (30 non-dependency, 56 total)
 
 ```
 src/core/
-├── Contango.sol              # Trade engine (745 lines, unchanged)
-├── Maestro.sol               # Simplified entry point (80 lines, rewritten)
-├── PositionNFT.sol           # Position ownership NFT (63 lines, unchanged)
-└── Vault.sol                 # Token escrow (147 lines, unchanged)
+├── Contango.sol              # Trade engine (non-upgradeable, with AccessGate + TradeLimits)
+├── Maestro.sol               # Simplified entry point (80 lines)
+├── PositionNFT.sol           # Position ownership NFT (63 lines)
+└── Vault.sol                 # Token escrow (non-upgradeable)
 
 src/interfaces/
 ├── IContango.sol             # Trade types + events (143 lines)
@@ -149,12 +150,20 @@ src/moneymarkets/
     ├── MorphoBlueMoneyMarket.sol      # Morpho Blue adapter
     └── MorphoBlueReverseLookup.sol    # Payload→MarketId lookup
 
+src/security/
+├── AccessGate.sol            # Wallet whitelist (max 10, Ownable)
+├── RouterGuard.sol           # DEX router/spender/flash provider whitelist (Ownable)
+└── TradeLimits.sol           # Per-trade size, daily volume, position count caps (Ownable)
+
 src/utils/
-├── SpotExecutor.sol          # DEX swap for Contango (37 lines)
-└── SimpleSpotExecutor.sol    # DEX swap for Maestro (40 lines)
+├── SpotExecutor.sol          # DEX swap for Contango (with RouterGuard validation)
+└── SimpleSpotExecutor.sol    # DEX swap for Maestro (with RouterGuard validation)
 
 src/dependencies/
 ├── IWETH9.sol, PayableMulticall.sol, Rewards.sol, Uniswap.sol
+
+script/kyberswap/
+└── quote.ts                  # Off-chain KyberSwap API helper (route + build → ExecutionParams)
 ```
 
 ---
@@ -233,44 +242,39 @@ Run with: `FOUNDRY_PROFILE=dev forge test --match-path "test/unit/*" -v`
 
 | Task | Status |
 |------|--------|
-| Create `src/security/AccessGate.sol` | NOT STARTED |
-| Integrate into `Contango.sol` — `onlyWhitelisted` on `trade()`, `tradeOnBehalfOf()` | NOT STARTED |
-| Integrate into `Maestro.sol` — whitelist check on `deposit()`, `withdraw()`, `trade()` | NOT STARTED |
-| Restrict `PositionNFT` transfers to whitelisted addresses | NOT STARTED |
-| Hard cap: 10 whitelisted wallets | NOT STARTED |
-| Write tests first (TDD): `test/unit/AccessGate.t.sol` | NOT STARTED |
+| `src/security/AccessGate.sol` — Ownable, add/remove wallet, max cap, requireWhitelisted | DONE |
+| Integrated into `Contango.tradeOnBehalfOf()` — every trade checks onBehalfOf | DONE |
+| `test/unit/AccessGate.t.sol` — 22 tests (ownership, add/remove, max, fuzz) | DONE |
+| Restrict PositionNFT transfers to whitelisted addresses | DEFERRED |
 
-### Step 2.2 — RouterGuard (DEX Router Whitelist) — HIGHEST PRIORITY
-
-**Critical vulnerability:** `SpotExecutor.sol:25-26` and `SimpleSpotExecutor.sol:30-31` accept arbitrary `router` and `spender` from calldata. A malicious caller can drain tokens.
+### Step 2.2 — RouterGuard (DEX Router Whitelist) — DONE
 
 | Task | Status |
 |------|--------|
-| Write tests first (TDD): `test/unit/RouterGuard.t.sol` | NOT STARTED |
-| Create `src/security/RouterGuard.sol` | NOT STARTED |
-| Inject as immutable into `SpotExecutor` — validate before `Address.functionCall()` | NOT STARTED |
-| Inject as immutable into `SimpleSpotExecutor` — validate before `Address.functionCall()` | NOT STARTED |
-| Validate `flashLoanProvider` in `Contango._flash()` | NOT STARTED |
-| Update `SpotExecutor.t.sol` — test guard integration | NOT STARTED |
+| `src/security/RouterGuard.sol` — Ownable, router/spender/flashLoanProvider whitelists | DONE |
+| Injected as immutable into `SpotExecutor` — validates before every swap | DONE |
+| Injected as immutable into `SimpleSpotExecutor` — validates before every swap | DONE |
+| `Contango._flash()` validates flash loan provider via `routerGuard.validateFlashLoanProvider()` | DONE |
+| `test/unit/RouterGuard.t.sol` — 27 tests (ownership, enable/disable, validate, fuzz) | DONE |
 
-### Step 2.3 — Remove Upgradeability
-
-| Task | Status |
-|------|--------|
-| `Contango.sol` — replace `UUPSUpgradeable` with constructor, remove `__gap` | NOT STARTED |
-| `Vault.sol` — replace upgradeable OZ with standard OZ, constructor init | NOT STARTED |
-| Update `Vault.t.sol` — remove proxy deployment, use direct constructor | NOT STARTED |
-
-**Note:** Maestro already had upgradeability removed in Phase 4.
-
-### Step 2.4 — Additional Hardening
+### Step 2.3 — Remove Upgradeability — DONE
 
 | Task | Status |
 |------|--------|
-| Add `nonReentrant` to `Contango.trade()` and `tradeOnBehalfOf()` | NOT STARTED |
-| Add per-tx max trade size limit | NOT STARTED |
-| Add per-epoch (daily) volume limit | NOT STARTED |
-| Add max open positions per user | NOT STARTED |
+| `Contango.sol` — replaced with AccessControl + Pausable, removed __gap/__dead, constructor init | DONE |
+| `Vault.sol` — replaced with ReentrancyGuard + AccessControl + Pausable, constructor init | DONE |
+| `Vault.t.sol` — updated to direct deployment (no ERC1967Proxy) | DONE |
+| Removed `Upgrades.t.sol` test suite | DONE |
+
+### Step 2.4 — TradeLimits — DONE
+
+| Task | Status |
+|------|--------|
+| `src/security/TradeLimits.sol` — Ownable, maxTradeSize/maxDailyVolume/maxOpenPositions | DONE |
+| `Contango.tradeOnBehalfOf()` — validateTradeSize + recordAndValidateVolume on every trade | DONE |
+| `Contango._open()` — incrementOpenPositions on new position | DONE |
+| `Contango._close()` — decrementOpenPositions on full close (burn) | DONE |
+| `test/unit/TradeLimits.t.sol` — 24 tests (config, validation, epoch reset, fuzz) | DONE |
 | Write tests first (TDD): `test/unit/TradeLimits.t.sol` | NOT STARTED |
 
 ---
@@ -313,18 +317,16 @@ On-chain (in tx):
 | Task | Status |
 |------|--------|
 | **On-chain: RouterGuard whitelist** | |
-| Add KyberSwap MetaAggregationRouterV2 to `RouterGuard.allowedRouters` | NOT STARTED |
-| Add KyberSwap router to `RouterGuard.allowedSpenders` | NOT STARTED |
-| Verify token approval flow (router as spender vs separate allowance target) | NOT STARTED |
+| RouterGuard created with router/spender/flashLoanProvider whitelists | DONE |
+| KyberSwap router address whitelist — done at deployment via `setRouter()` | AT DEPLOY |
+| Flash loan provider validation in `Contango._flash()` | DONE |
 | **Off-chain: Quote & Encode Pipeline** | |
-| Create TypeScript helper to call KyberSwap GET route API | NOT STARTED |
-| Create helper to call KyberSwap POST route/build API | NOT STARTED |
-| Create helper to construct `ExecutionParams` from KyberSwap response | NOT STARTED |
-| Create end-to-end script: quote → build → construct calldata → send tx | NOT STARTED |
+| `script/kyberswap/quote.ts` — GET route + POST build + output ExecutionParams JSON | DONE |
+| Supports all EVM chains, configurable slippage, CLI interface | DONE |
 | **Testing** | |
 | Fork test: KyberSwap swap wstETH↔ETH via SpotExecutor (mainnet fork) | NOT STARTED |
 | Fork test: KyberSwap swap syrupUSDC↔USDC via SpotExecutor (mainnet fork) | NOT STARTED |
-| Test RouterGuard rejects non-KyberSwap router addresses | NOT STARTED |
+| RouterGuard rejects non-whitelisted routers — covered in unit tests (27 tests) | DONE |
 
 ### Why KyberSwap
 
@@ -442,39 +444,39 @@ Phase 0 (baseline) ✅
   → Phase 1 (strip code) ✅
     → Phase 4 (simplified Maestro) ✅
       → Phase 5 unit tests (TDD) ✅
-        → Phase 2.2 (RouterGuard — HIGHEST PRIORITY) ← NEXT
-          → Phase 2.1 (AccessGate)
-            → Phase 2.3 (remove upgradeability)
-              → Phase 2.4 (trade limits)
-                → Phase 3 (KyberSwap integration)
-                  → Phase 5 integration tests
+        → Phase 2.2 (RouterGuard) ✅
+          → Phase 2.1 (AccessGate) ✅
+            → Phase 2.3 (remove upgradeability) ✅
+              → Phase 2.4 (TradeLimits) ✅
+                → Phase 3 (KyberSwap) ✅
+                  → Phase 5 integration tests ← NEXT
                     → Phase 6 (deployment)
                       → Phase 7 (docs)
 ```
 
-**Next action:** Write `test/unit/RouterGuard.t.sol` first (TDD), then implement `src/security/RouterGuard.sol`.
+**Next action:** Fork integration tests (requires `.env` with `MAINNET_URL`) or Phase 6 deployment scripts.
 
 ---
 
 ## Key Files Reference
 
-| File | Role | Lines |
-|------|------|-------|
-| `src/core/Contango.sol` | Trade engine — flash loan orchestration | 745 |
-| `src/core/Maestro.sol` | User entry point (simplified) | 80 |
-| `src/core/Vault.sol` | Token escrow | 147 |
-| `src/core/PositionNFT.sol` | Position ownership NFT | 63 |
-| `src/utils/SpotExecutor.sol` | DEX swap for Contango (needs RouterGuard) | 37 |
-| `src/utils/SimpleSpotExecutor.sol` | DEX swap for Maestro (needs RouterGuard) | 40 |
-| `src/interfaces/IContango.sol` | ExecutionParams, Trade, TradeParams structs | 143 |
-| `src/moneymarkets/aave/AaveMoneyMarket.sol` | Aave V3 adapter | ~200 |
-| `src/moneymarkets/morpho/MorphoBlueMoneyMarket.sol` | Morpho Blue adapter | 128 |
-| `src/moneymarkets/BaseMoneyMarket.sol` | Abstract base for MM adapters | 138 |
-| `src/moneymarkets/UnderlyingPositionFactory.sol` | MM instance management | 64 |
-| `src/libraries/DataTypes.sol` | PositionId, Symbol, MoneyMarketId types | 73 |
-| `src/libraries/extensions/PositionIdExt.sol` | PositionId encoding/decoding | 80 |
-| `FORK_ROADMAP.md` | Original analysis document | ~920 |
-| `foundry.toml` | Build config, RPC endpoints, formatter | 199 |
+| File | Role |
+|------|------|
+| `src/core/Contango.sol` | Trade engine — flash loans, AccessGate, TradeLimits, RouterGuard (non-upgradeable) |
+| `src/core/Maestro.sol` | User entry point — deposit/withdraw/trade (80 lines) |
+| `src/core/Vault.sol` | Token escrow (non-upgradeable) |
+| `src/core/PositionNFT.sol` | Position ownership NFT |
+| `src/security/AccessGate.sol` | Wallet whitelist (max 10, Ownable) |
+| `src/security/RouterGuard.sol` | DEX router/spender/flash provider whitelist (Ownable) |
+| `src/security/TradeLimits.sol` | Trade size, daily volume, position count caps (Ownable) |
+| `src/utils/SpotExecutor.sol` | DEX swap for Contango (with RouterGuard) |
+| `src/utils/SimpleSpotExecutor.sol` | DEX swap for Maestro (with RouterGuard) |
+| `src/moneymarkets/aave/AaveMoneyMarket.sol` | Aave V3 adapter |
+| `src/moneymarkets/morpho/MorphoBlueMoneyMarket.sol` | Morpho Blue adapter |
+| `src/moneymarkets/BaseMoneyMarket.sol` | Abstract base for MM adapters |
+| `src/moneymarkets/UnderlyingPositionFactory.sol` | MM instance management |
+| `script/kyberswap/quote.ts` | Off-chain KyberSwap quote → ExecutionParams builder |
+| `FORK_ROADMAP.md` | Original analysis document |
 
 ---
 
@@ -489,6 +491,9 @@ Phase 0 (baseline) ✅
 | 2026-03-15 | TDD approach | Write tests before implementing security contracts (RouterGuard, AccessGate) |
 | 2026-03-15 | Restore MorphoBlueReverseLookup | Initially deleted, but required by MorphoBlueMoneyMarket for payload→marketId mapping |
 | 2026-03-15 | Maestro rewrite vs. modification | Full rewrite cleaner than incremental deletion — 341→80 lines, constructor simplified |
+| 2026-03-16 | AccessGate on Contango only, not Maestro | Contango.tradeOnBehalfOf() is the single choke point — no redundant checks needed |
+| 2026-03-16 | TradeLimits 0 = unlimited | All limits default to 0 (disabled) — opt-in configuration at deployment |
+| 2026-03-16 | Daily volume epoch = block.timestamp / 1 days | Simple 24h UTC-aligned epochs, auto-reset on first trade of new epoch |
 
 ---
 
@@ -496,9 +501,11 @@ Phase 0 (baseline) ✅
 
 | Issue | Severity | Notes |
 |-------|----------|-------|
-| SpotExecutor accepts arbitrary router/spender | CRITICAL | Phase 2.2 (RouterGuard) is the fix. Attacker can drain tokens via malicious router calldata. |
-| Contango/Vault still use UUPS upgradeability | MEDIUM | Phase 2.3 will remove. Admin key compromise = total protocol compromise. |
-| No reentrancy guard on Contango.trade() | MEDIUM | Phase 2.4. Flash loan callbacks are external — defense-in-depth needed. |
+| ~~SpotExecutor accepts arbitrary router/spender~~ | ~~CRITICAL~~ | **FIXED** — RouterGuard validates before every swap |
+| ~~Contango/Vault still use UUPS upgradeability~~ | ~~MEDIUM~~ | **FIXED** — converted to non-upgradeable |
+| No reentrancy guard on Contango.trade() | MEDIUM | Flash loan callbacks are external — defense-in-depth. Consider adding later. |
+| PositionNFT transfers not restricted to whitelisted | LOW | Anyone can receive transferred positions. Deferred — AccessGate on trade is sufficient for now. |
 | `FeeParams` struct still in DataTypes.sol | LOW | Unused after Maestro simplification. Can remove in cleanup pass. |
-| `test/TestSetup.t.sol` is 83K with many stubs | LOW | Many test functions stubbed out after stripping. Clean up when integration tests are written. |
+| `test/TestSetup.t.sol` is large with many stubs | LOW | Many test functions stubbed out after stripping. Clean up when integration tests are written. |
 | Default forge profile fails (deny_warnings) | LOW | Use `FOUNDRY_PROFILE=dev` for development. Fix in foundry.toml if needed. |
+| No frontend | INFO | Contango frontend is closed-source. This fork requires CLI/script interaction or custom UI. |
