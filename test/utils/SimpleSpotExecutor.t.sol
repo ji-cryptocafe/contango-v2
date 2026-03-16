@@ -20,7 +20,10 @@ contract SimpleSpotExecutorTest is SimpleSpotExecutorEvents, SimpleSpotExecutorE
         tokenB = new ERC20("Token B", "TKN_B");
 
         mockRouter = new MockRouter();
-        sut = new SimpleSpotExecutor();
+        RouterGuard guard = new RouterGuard();
+        guard.setRouter(address(mockRouter), true);
+        guard.setSpender(address(mockRouter), true);
+        sut = new SimpleSpotExecutor(guard);
     }
 
     function testExecuteSwap() public {

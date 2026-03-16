@@ -15,6 +15,7 @@ import "src/moneymarkets/ImmutableBeaconProxy.sol";
 import "src/moneymarkets/aave/AaveMoneyMarket.sol";
 import "src/moneymarkets/aave/dependencies/IPoolAddressesProvider.sol";
 import "src/moneymarkets/morpho/MorphoBlueMoneyMarket.sol";
+import "src/security/RouterGuard.sol";
 
 import "script/constants.sol";
 import "script/Addresses.s.sol";
@@ -226,7 +227,8 @@ contract Deployer is Addresses {
         UnderlyingPositionFactory positionFactory = new UnderlyingPositionFactory(TIMELOCK);
 
         deployment.vault = deployVault(env);
-        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor());
+        RouterGuard routerGuard = new RouterGuard();
+        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor(routerGuard));
         Contango(payable(address(deployment.contango))).initialize(TIMELOCK);
 
         VM.startPrank(TIMELOCK_ADDRESS);
@@ -264,7 +266,7 @@ contract Deployer is Addresses {
         deployment.maestro = new Maestro(
             deployment.contango,
             deployment.vault,
-            new SimpleSpotExecutor()
+            new SimpleSpotExecutor(routerGuard)
         );
         VM.label(address(deployment.maestro), "Maestro");
 

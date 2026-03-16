@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../libraries/ERC20Lib.sol";
+import "../security/RouterGuard.sol";
 
 interface SimpleSpotExecutorEvents {
 
@@ -17,6 +18,12 @@ interface SimpleSpotExecutorErrors {
 
 contract SimpleSpotExecutor is SimpleSpotExecutorEvents, SimpleSpotExecutorErrors {
 
+    RouterGuard public immutable routerGuard;
+
+    constructor(RouterGuard _routerGuard) {
+        routerGuard = _routerGuard;
+    }
+
     function executeSwap(
         IERC20 tokenToSell,
         IERC20 tokenToBuy,
@@ -27,6 +34,9 @@ contract SimpleSpotExecutor is SimpleSpotExecutorEvents, SimpleSpotExecutorError
         bytes calldata swapBytes,
         address to
     ) external returns (uint256 output) {
+        routerGuard.validateRouter(router);
+        routerGuard.validateSpender(spender);
+
         SafeERC20.forceApprove(tokenToSell, spender, amountIn);
         Address.functionCall(router, swapBytes);
 

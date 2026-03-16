@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import "../libraries/ERC20Lib.sol";
 import "../interfaces/IContango.sol";
+import "../security/RouterGuard.sol";
 
 contract SpotExecutor {
 
@@ -16,10 +17,19 @@ contract SpotExecutor {
 
     event SwapExecuted(IERC20 indexed tokenToSell, IERC20 indexed tokenToBuy, int256 amountIn, int256 amountOut, uint256 price);
 
+    RouterGuard public immutable routerGuard;
+
+    constructor(RouterGuard _routerGuard) {
+        routerGuard = _routerGuard;
+    }
+
     function executeSwap(IERC20 tokenToSell, IERC20 tokenToBuy, Currency inputCcy, uint256 unit, ExecutionParams memory execParams)
         external
         returns (int256 input, int256 output, uint256 price)
     {
+        routerGuard.validateRouter(execParams.router);
+        routerGuard.validateSpender(execParams.spender);
+
         input = ERC20Lib.myBalanceI(tokenToSell);
 
         SafeERC20.forceApprove(tokenToSell, execParams.spender, execParams.swapAmount);

@@ -12,6 +12,7 @@ import "src/interfaces/IContango.sol";
 import "src/interfaces/IVault.sol";
 import "src/interfaces/IMaestro.sol";
 import "src/utils/SimpleSpotExecutor.sol";
+import "src/security/RouterGuard.sol";
 import "src/libraries/DataTypes.sol";
 import "src/libraries/Errors.sol";
 
@@ -224,7 +225,7 @@ contract MaestroUnitTest is Test {
         weth = new MockWETH();
         mockPositionNFT = new MockPositionNFT();
         mockContango = new MockContango(address(mockPositionNFT));
-        spotExecutor = new SimpleSpotExecutor();
+        spotExecutor = new SimpleSpotExecutor(new RouterGuard());
 
         // Deploy mock vault
         mockVault = new MockVault(IWETH9(address(weth)));

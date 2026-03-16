@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import "src/utils/SpotExecutor.sol";
 import "src/utils/SimpleSpotExecutor.sol";
+import "src/security/RouterGuard.sol";
 
 // ============ Mock Contracts ============
 
@@ -59,12 +60,16 @@ contract SpotExecutorTest is Test {
     MockToken internal tokenB; // quote, 6 decimals
     SwapRouter internal router;
     SpotExecutor internal sut;
+    RouterGuard internal guard;
 
     function setUp() public {
         tokenA = new MockToken("Base Token", "BASE", 18);
         tokenB = new MockToken("Quote Token", "QUOTE", 6);
         router = new SwapRouter();
-        sut = new SpotExecutor();
+        guard = new RouterGuard();
+        guard.setRouter(address(router), true);
+        guard.setSpender(address(router), true);
+        sut = new SpotExecutor(guard);
     }
 
     // --- Successful swap with base input currency ---
@@ -238,12 +243,16 @@ contract SimpleSpotExecutorTest is Test {
     MockToken internal tokenB;
     SwapRouter internal router;
     SimpleSpotExecutor internal sut;
+    RouterGuard internal guard;
 
     function setUp() public {
         tokenA = new MockToken("Token A", "TKN_A", 18);
         tokenB = new MockToken("Token B", "TKN_B", 18);
         router = new SwapRouter();
-        sut = new SimpleSpotExecutor();
+        guard = new RouterGuard();
+        guard.setRouter(address(router), true);
+        guard.setSpender(address(router), true);
+        sut = new SimpleSpotExecutor(guard);
     }
 
     // --- Successful swap ---
