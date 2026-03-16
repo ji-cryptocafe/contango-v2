@@ -1,8 +1,8 @@
 # STATUS_REPORT.md
 
 **Project:** Contango V2 Fork — Private, fee-free leverage protocol
-**Last Updated:** 2026-03-15
-**Current Phase:** Phase 5 (TDD — Unit Tests Complete, Integration Tests Next)
+**Last Updated:** 2026-03-16
+**Current Phase:** Phase 2 Security Hardening (2.1-2.3 DONE, 2.4 next)
 **Branch:** `fork/stripped`
 
 ---
@@ -14,8 +14,11 @@
 | Phase 0: Setup & Baseline | DONE | Foundry installed, build verified, branch `fork/stripped` created |
 | Phase 1: Strip Non-Essential Code | DONE | 86 source files deleted, 3 modified, 52 test files deleted, 36 test files patched |
 | Phase 4: Simplified Maestro | DONE | 341 → 80 lines. Removed orders, fees, routing, permit2, UUPS, swap helpers |
-| Phase 5: Testing (Unit) | DONE | 254 tests across 13 suites in 8 files, all passing |
-| Phase 2: Security Hardening | NOT STARTED | AccessGate, RouterGuard, remove upgradeability |
+| Phase 5: Testing (Unit) | DONE | 303 tests across 15 suites in 9 files, all passing |
+| Phase 2.1: AccessGate | DONE | Wallet whitelist (max 10), integrated into Contango.tradeOnBehalfOf() |
+| Phase 2.2: RouterGuard | DONE | DEX router/spender/flash provider whitelist, integrated into SpotExecutors |
+| Phase 2.3: Remove Upgradeability | DONE | Contango + Vault converted to non-upgradeable, no proxies |
+| Phase 2.4: Trade Limits | NOT STARTED | Per-tx max size, daily volume, max positions |
 | Phase 3: KyberSwap Integration | NOT STARTED | Off-chain pipeline + on-chain RouterGuard |
 | Phase 5: Testing (Integration) | NOT STARTED | Fork tests for Aave wstETH/ETH, Morpho syrupUSDC/USDC |
 | Phase 5: Testing (Security) | NOT STARTED | Tests for AccessGate, RouterGuard, trade limits |
