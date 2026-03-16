@@ -477,6 +477,7 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
         bytes memory data,
         function(address, address, address, uint256, uint256, bytes memory) external returns (bytes memory) callback
     ) private returns (bytes memory result) {
+        spotExecutor.routerGuard().validateFlashLoanProvider(address(provider));
         callbackHash = keccak256(data);
         result = provider.flash(loanReceiver, asset, amount, data, callback);
     }
