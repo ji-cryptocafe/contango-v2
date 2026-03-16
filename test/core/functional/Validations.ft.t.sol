@@ -39,7 +39,7 @@ contract Validations is BaseTest, IContangoEvents, IContangoErrors {
 
     function testSetters() public {
         vm.startPrank(TIMELOCK_ADDRESS);
-        AccessControlUpgradeable(address(contango)).grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);
+        AccessControl(address(contango)).grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);
 
         vm.expectEmit(true, true, true, true);
         emit InstrumentCreated(WETHUSDC, weth, usdc);
@@ -205,7 +205,7 @@ contract Validations is BaseTest, IContangoEvents, IContangoErrors {
         ExecutionParams memory execParams;
 
         vm.prank(TIMELOCK_ADDRESS);
-        AccessControlUpgradeable(address(contango)).grantRole(EMERGENCY_BREAK_ROLE, address(this));
+        AccessControl(address(contango)).grantRole(EMERGENCY_BREAK_ROLE, address(this));
 
         contango.pause();
 

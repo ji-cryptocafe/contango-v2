@@ -216,8 +216,7 @@ contract Deployer is Addresses {
     }
 
     function deployVault(Env env) public returns (Vault vault) {
-        vault = new Vault(env.nativeToken());
-        vault.initialize(TIMELOCK);
+        vault = new Vault(env.nativeToken(), TIMELOCK);
         VM.label(address(vault), "Vault");
         VM.prank(TIMELOCK_ADDRESS);
         vault.grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);
@@ -230,8 +229,7 @@ contract Deployer is Addresses {
         deployment.vault = deployVault(env);
         RouterGuard routerGuard = new RouterGuard();
         AccessGate accessGate = new AccessGate();
-        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor(routerGuard), accessGate);
-        Contango(payable(address(deployment.contango))).initialize(TIMELOCK);
+        deployment.contango = new Contango(positionNFT, deployment.vault, positionFactory, new SpotExecutor(routerGuard), accessGate, TIMELOCK);
 
         VM.startPrank(TIMELOCK_ADDRESS);
         deployment.contango.grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);

@@ -2,9 +2,8 @@
 pragma solidity ^0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
 import "../moneymarkets/interfaces/IFlashBorrowProvider.sol";
@@ -22,7 +21,7 @@ import "../libraries/Validations.sol";
 
 import "./PositionNFT.sol";
 
-contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable, Multicall {
+contract Contango is IContango, AccessControl, Pausable, Multicall {
 
     using Math for *;
     using SafeCast for *;
@@ -59,33 +58,17 @@ contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, U
     SpotExecutor public immutable spotExecutor;
     AccessGate public immutable accessGate;
 
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * mixins without shifting down storage in this contract.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     *
-     * After adding some OZ mixins, we consumed 301 slots from the original 50k gap.
-     */
-    uint256[50_000 - 301] private __gap;
-
-    uint256[4] private __dead; // Storage was replaced on this contract so we kill the slots to avoid dirty reads
     bytes32 private callbackHash;
     bytes32 private tradeHash;
     mapping(PositionId positionId => address owner) public lastOwner;
     mapping(Symbol symbol => InstrumentStorage instrument) private instruments;
 
-    constructor(PositionNFT nft, IVault v, IUnderlyingPositionFactory pf, SpotExecutor spot, AccessGate gate) {
+    constructor(PositionNFT nft, IVault v, IUnderlyingPositionFactory pf, SpotExecutor spot, AccessGate gate, Timelock timelock) {
         positionNFT = nft;
         vault = v;
         positionFactory = pf;
         spotExecutor = spot;
         accessGate = gate;
-    }
-
-    function initialize(Timelock timelock) public initializer {
-        __AccessControl_init_unchained();
-        __Pausable_init_unchained();
-        __UUPSUpgradeable_init_unchained();
         _grantRole(DEFAULT_ADMIN_ROLE, Timelock.unwrap(timelock));
     }
 
@@ -729,9 +712,6 @@ contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, U
         instrument_.closingOnly = i.closingOnly;
     }
 
-    // ============================= Admin ================================
-
-    function _authorizeUpgrade(address) internal view override onlyRole(DEFAULT_ADMIN_ROLE) { }
 
 }
 

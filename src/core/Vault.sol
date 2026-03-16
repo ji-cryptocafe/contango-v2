@@ -1,10 +1,9 @@
 //SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "../interfaces/IVault.sol";
 import "../libraries/DataTypes.sol";
@@ -12,7 +11,7 @@ import "../libraries/ERC20Lib.sol";
 import { CONTANGO_ROLE, OPERATOR_ROLE } from "../libraries/Roles.sol";
 import { SenderIsNotNativeToken } from "../libraries/Errors.sol";
 
-contract Vault is IVault, ReentrancyGuardUpgradeable, AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
+contract Vault is IVault, ReentrancyGuard, AccessControl, Pausable {
 
     using ERC20Lib for IERC20;
     using ERC20Lib for IWETH9;
@@ -25,27 +24,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, AccessControlUpgradeable, 
 
     IWETH9 public immutable nativeToken;
 
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * mixins without shifting down storage in this contract.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     *
-     * After adding some OZ mixins, we consumed 301 slots from the original 50k gap.
-     */
-    uint256[50_000 - 301] private __gap;
-
-    uint256[4] private __dead; // Storage was replaced on this contract so we kill the slots to avoid dirty reads
     mapping(IERC20 token => TokenData tokenData) private tokens;
 
-    constructor(IWETH9 _nativeToken) {
+    constructor(IWETH9 _nativeToken, Timelock timelock) {
         nativeToken = _nativeToken;
-    }
-
-    function initialize(Timelock timelock) public initializer {
-        __ReentrancyGuard_init_unchained();
-        __AccessControl_init_unchained();
-        __Pausable_init_unchained();
-        __UUPSUpgradeable_init_unchained();
         _grantRole(DEFAULT_ADMIN_ROLE, Timelock.unwrap(timelock));
         _setTokenSupport(nativeToken, true);
     }
@@ -131,8 +113,6 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, AccessControlUpgradeable, 
     function _validAmount(uint256 amount) internal pure {
         if (amount == 0) revert ZeroAmount();
     }
-
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(DEFAULT_ADMIN_ROLE) { }
 
     modifier authorised(address account) {
         if (msg.sender != account) _checkRole(CONTANGO_ROLE, msg.sender);

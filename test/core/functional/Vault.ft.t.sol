@@ -19,8 +19,7 @@ contract VaultFunctional is BaseTest, IVaultEvents {
         env = provider(Network.Arbitrum);
         env.init();
         weth = env.nativeToken();
-        sut = new Vault(weth);
-        Vault(payable(address(sut))).initialize(TIMELOCK);
+        sut = new Vault(weth, TIMELOCK);
         vm.prank(TIMELOCK_ADDRESS);
         sut.grantRole(OPERATOR_ROLE, TIMELOCK_ADDRESS);
     }

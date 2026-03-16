@@ -1,44 +1,5 @@
 //SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-
-import "../../BaseTest.sol";
-
-contract Upgrades is BaseTest, IContangoEvents, IContangoErrors {
-
-    Env internal env;
-    address newImpl;
-
-    function setUp() public {
-        env = provider(Network.Optimism);
-        env.init();
-        newImpl = address(new NewImpl());
-    }
-
-    function testUpgradeContango() public {
-        _testUpgrade(address(env.contango()), abi.encodeWithSelector(Contango.initialize.selector, TIMELOCK));
-    }
-
-    function testUpgradeVault() public {
-        _testUpgrade(address(env.vault()), abi.encodeWithSelector(Vault.initialize.selector, TIMELOCK));
-    }
-
-
-    function _testUpgrade(address impl, bytes memory init) public {
-        UUPSUpgradeable proxy = UUPSUpgradeable(address(new ERC1967Proxy(impl, init)));
-
-        expectAccessControl(address(this), "");
-        proxy.upgradeTo(impl);
-
-        vm.prank(TIMELOCK_ADDRESS);
-        proxy.upgradeTo(newImpl);
-    }
-
-}
-
-contract NewImpl is UUPSUpgradeable {
-
-    function _authorizeUpgrade(address) internal view override { }
-
-}
+// Upgradeability has been removed from Contango and Vault.
+// This file is intentionally empty.

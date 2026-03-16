@@ -138,11 +138,8 @@ contract VaultUnitTest is Test {
         ierc20Token = IERC20(address(token));
         iweth = IWETH9(address(weth));
 
-        // Deploy Vault implementation and proxy
-        Vault impl = new Vault(iweth);
-        bytes memory initData = abi.encodeCall(Vault.initialize, (Timelock.wrap(admin)));
-        ERC1967Proxy proxy = new ERC1967Proxy(address(impl), initData);
-        vault = Vault(payable(address(proxy)));
+        // Deploy Vault directly (no proxy — upgradeability removed)
+        vault = Vault(payable(address(new Vault(iweth, Timelock.wrap(admin)))));
 
         // Grant roles
         vm.startPrank(admin);
