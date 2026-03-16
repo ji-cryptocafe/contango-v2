@@ -12,6 +12,7 @@ import "../moneymarkets/interfaces/IFlashBorrowProvider.sol";
 import "../interfaces/IContango.sol";
 
 import "../utils/SpotExecutor.sol";
+import "../security/AccessGate.sol";
 
 import "../libraries/ERC20Lib.sol";
 import "../libraries/Errors.sol";
@@ -56,6 +57,7 @@ contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, U
     IVault public immutable vault;
     IUnderlyingPositionFactory public immutable positionFactory;
     SpotExecutor public immutable spotExecutor;
+    AccessGate public immutable accessGate;
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
@@ -72,11 +74,12 @@ contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, U
     mapping(PositionId positionId => address owner) public lastOwner;
     mapping(Symbol symbol => InstrumentStorage instrument) private instruments;
 
-    constructor(PositionNFT nft, IVault v, IUnderlyingPositionFactory pf, SpotExecutor spot) {
+    constructor(PositionNFT nft, IVault v, IUnderlyingPositionFactory pf, SpotExecutor spot, AccessGate gate) {
         positionNFT = nft;
         vault = v;
         positionFactory = pf;
         spotExecutor = spot;
+        accessGate = gate;
     }
 
     function initialize(Timelock timelock) public initializer {
@@ -126,6 +129,7 @@ contract Contango is IContango, AccessControlUpgradeable, PausableUpgradeable, U
         returns (PositionId positionId, Trade memory trade_)
     {
         _requireNotPaused();
+        accessGate.requireWhitelisted(onBehalfOf);
         address owner;
         positionId = tradeParams.positionId;
         if (tradeParams.quantity > 0) {
