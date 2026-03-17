@@ -195,7 +195,8 @@ contract AaveWstETHForkTest is Test {
             router: fakeRouter,
             swapAmount: 5 ether,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // Should revert at RouterGuard level

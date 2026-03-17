@@ -354,7 +354,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // New position: positionNFT.exists() returns false, so no permission check
@@ -383,7 +384,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // Owner can modify their own position
@@ -411,7 +413,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // Random address without approval should be rejected
@@ -440,7 +443,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         vm.prank(trader);
@@ -471,7 +475,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         vm.prank(trader);
@@ -503,7 +508,8 @@ contract MaestroUnitTest is Test {
             router: address(0),
             swapAmount: 0,
             swapBytes: "",
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         vm.prank(trader);

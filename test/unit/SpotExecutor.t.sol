@@ -89,7 +89,8 @@ contract SpotExecutorTest is Test {
             router: address(router),
             swapAmount: amountIn,
             swapBytes: swapBytes,
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // Expect the SwapExecuted event
@@ -132,7 +133,8 @@ contract SpotExecutorTest is Test {
             router: address(router),
             swapAmount: amountIn,
             swapBytes: swapBytes,
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         // price = input.abs().mulDiv(unit, output.abs()) for Quote input
@@ -167,7 +169,8 @@ contract SpotExecutorTest is Test {
             router: address(router),
             swapAmount: amountIn,
             swapBytes: swapBytes,
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         (, , uint256 price) = sut.executeSwap(IERC20(address(tokenA)), IERC20(address(tokenB)), Currency.Base, unit, execParams);
@@ -191,7 +194,8 @@ contract SpotExecutorTest is Test {
             router: address(router),
             swapAmount: amountIn,
             swapBytes: swapBytes,
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         sut.executeSwap(IERC20(address(tokenA)), IERC20(address(tokenB)), Currency.Base, 1e6, execParams);
@@ -219,7 +223,8 @@ contract SpotExecutorTest is Test {
             router: address(router),
             swapAmount: amountIn,
             swapBytes: swapBytes,
-            flashLoanProvider: IERC7399(address(0))
+            flashLoanProvider: IERC7399(address(0)),
+            deadline: 0
         });
 
         (, int256 output,) = sut.executeSwap(IERC20(address(tokenA)), IERC20(address(tokenB)), Currency.Base, 1e18, execParams);

@@ -40,6 +40,7 @@ struct ExecutionParams {
     uint256 swapAmount;
     bytes swapBytes;
     IERC7399 flashLoanProvider;
+    uint256 deadline; // block.timestamp deadline, 0 = no deadline
 }
 
 struct Instrument {
@@ -88,6 +89,7 @@ interface IContangoErrors {
     error UnexpectedCallback(); // 0xdab1e993
     error InvalidCashflowCcy(); // 0x2c6ff311
     error UnexpectedTrade(); // 0xf1a9b64c
+    error DeadlineExceeded(uint256 deadline, uint256 current);
 
 }
 

@@ -69,27 +69,27 @@ contract Vault is IVault, ReentrancyGuard, AccessControl, Pausable {
         return amount;
     }
 
-    function deposit(IERC20 token, address account, uint256 amount) public override authorised(account) returns (uint256) {
+    function deposit(IERC20 token, address account, uint256 amount) public override nonReentrant authorised(account) returns (uint256) {
         return _deposit({ token: token, payer: account, account: account, amount: amount });
     }
 
-    function depositTo(IERC20 token, address account, uint256 amount) public override returns (uint256) {
+    function depositTo(IERC20 token, address account, uint256 amount) public override nonReentrant returns (uint256) {
         return _deposit({ token: token, payer: msg.sender, account: account, amount: amount });
     }
 
-    function depositNative(address account) public payable authorised(account) returns (uint256) {
+    function depositNative(address account) public payable nonReentrant authorised(account) returns (uint256) {
         uint256 amount = msg.value;
         _validAmount(amount);
 
         nativeToken.deposit{ value: amount }();
-        return deposit(nativeToken, account, amount);
+        return _deposit({ token: nativeToken, payer: address(this), account: account, amount: amount });
     }
 
-    function withdraw(IERC20 token, address account, uint256 amount, address to) public authorised(account) returns (uint256) {
+    function withdraw(IERC20 token, address account, uint256 amount, address to) public nonReentrant authorised(account) returns (uint256) {
         return _withdraw(token, account, amount, to, IWETH9(address(0)));
     }
 
-    function withdrawNative(address account, uint256 amount, address to) external authorised(account) returns (uint256) {
+    function withdrawNative(address account, uint256 amount, address to) external nonReentrant authorised(account) returns (uint256) {
         return _withdraw(nativeToken, account, amount, to, nativeToken);
     }
 

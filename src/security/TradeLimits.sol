@@ -10,6 +10,11 @@ contract TradeLimits is Ownable {
     error MaxOpenPositionsExceeded(address trader, uint256 maxAllowed);
     error OnlyContango();
 
+    event MaxTradeSizeSet(uint256 max);
+    event MaxDailyVolumeSet(uint256 max);
+    event MaxOpenPositionsSet(uint256 max);
+    event ContangoSet(address contango);
+
     uint256 public maxTradeSize;      // 0 = unlimited
     uint256 public maxDailyVolume;    // 0 = unlimited
     uint256 public maxOpenPositions;  // 0 = unlimited
@@ -32,18 +37,22 @@ contract TradeLimits is Ownable {
 
     function setContango(address _contango) external onlyOwner {
         contango = _contango;
+        emit ContangoSet(_contango);
     }
 
     function setMaxTradeSize(uint256 max) external onlyOwner {
         maxTradeSize = max;
+        emit MaxTradeSizeSet(max);
     }
 
     function setMaxDailyVolume(uint256 max) external onlyOwner {
         maxDailyVolume = max;
+        emit MaxDailyVolumeSet(max);
     }
 
     function setMaxOpenPositions(uint256 max) external onlyOwner {
         maxOpenPositions = max;
+        emit MaxOpenPositionsSet(max);
     }
 
     // =================== Validation (view — no access control needed) ===================

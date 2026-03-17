@@ -118,6 +118,11 @@ contract Deploy is Script {
         // 12. Create instruments
         _createInstruments();
 
+        // 13. Transfer security contract ownership to admin (use timelock/multisig in production)
+        routerGuard.transferOwnership(admin);
+        accessGate.transferOwnership(admin);
+        tradeLimits.transferOwnership(admin);
+
         vm.stopBroadcast();
 
         // Log deployed addresses

@@ -340,7 +340,8 @@ contract PositionValidationsFunctional is BaseTest, IContangoErrors, IContangoEv
                 spender: address(0),
                 swapAmount: 0,
                 swapBytes: "",
-                flashLoanProvider: IERC7399(address(0))
+                flashLoanProvider: IERC7399(address(0)),
+                deadline: 0
             })
         );
     }

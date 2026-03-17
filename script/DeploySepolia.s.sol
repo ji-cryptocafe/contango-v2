@@ -95,6 +95,11 @@ contract DeploySepolia is Script {
         // 10. Create test instrument (WETH/USDC as placeholder)
         contango.createInstrument(Symbol.wrap("WETH/USDC"), AAVE_WETH, AAVE_USDC);
 
+        // 11. Transfer security contract ownership to admin
+        routerGuard.transferOwnership(admin);
+        accessGate.transferOwnership(admin);
+        tradeLimits.transferOwnership(admin);
+
         vm.stopBroadcast();
 
         console.log("=== Sepolia Deployment ===");

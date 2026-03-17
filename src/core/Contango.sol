@@ -125,6 +125,9 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
         returns (PositionId positionId, Trade memory trade_)
     {
         if (tradeParams.quantity >= 0) _requireNotPaused(); // allow closures when paused
+        if (execParams.deadline != 0 && block.timestamp > execParams.deadline) {
+            revert DeadlineExceeded(execParams.deadline, block.timestamp);
+        }
         accessGate.requireWhitelisted(onBehalfOf);
         tradeLimits.validateTradeSize(tradeParams.quantity > 0 ? uint256(tradeParams.quantity) : uint256(-tradeParams.quantity));
         tradeLimits.recordAndValidateVolume(onBehalfOf, execParams.swapAmount);
