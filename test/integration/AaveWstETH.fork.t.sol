@@ -79,6 +79,7 @@ contract AaveWstETHForkTest is Test {
         simpleSpotExecutor = new SimpleSpotExecutor(routerGuard);
 
         contango = new Contango(positionNFT, vault, positionFactory, spotExecutor, accessGate, tradeLimits, timelock);
+        tradeLimits.setContango(address(contango));
         maestro = new Maestro(IContango(address(contango)), vault, simpleSpotExecutor);
 
         // Roles

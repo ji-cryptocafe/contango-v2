@@ -34,6 +34,7 @@ contract SpotExecutor {
 
         SafeERC20.forceApprove(tokenToSell, execParams.spender, execParams.swapAmount);
         Address.functionCall(execParams.router, execParams.swapBytes);
+        SafeERC20.forceApprove(tokenToSell, execParams.spender, 0); // clear residual approval
 
         input = ERC20Lib.myBalanceI(tokenToSell) - input;
         output = ERC20Lib.transferBalance(tokenToBuy, msg.sender).toInt256();

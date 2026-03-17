@@ -8,10 +8,13 @@ contract TradeLimits is Ownable {
     error TradeSizeExceeded(uint256 maxAllowed, uint256 actual);
     error DailyVolumeExceeded(address trader, uint256 maxAllowed, uint256 actual);
     error MaxOpenPositionsExceeded(address trader, uint256 maxAllowed);
+    error OnlyContango();
 
     uint256 public maxTradeSize;      // 0 = unlimited
     uint256 public maxDailyVolume;    // 0 = unlimited
     uint256 public maxOpenPositions;  // 0 = unlimited
+
+    address public contango;
 
     struct VolumeData {
         uint256 volume;
@@ -27,6 +30,10 @@ contract TradeLimits is Ownable {
 
     // =================== Configuration ===================
 
+    function setContango(address _contango) external onlyOwner {
+        contango = _contango;
+    }
+
     function setMaxTradeSize(uint256 max) external onlyOwner {
         maxTradeSize = max;
     }
@@ -39,7 +46,7 @@ contract TradeLimits is Ownable {
         maxOpenPositions = max;
     }
 
-    // =================== Validation ===================
+    // =================== Validation (view — no access control needed) ===================
 
     function validateTradeSize(uint256 size) external view {
         if (maxTradeSize != 0 && size > maxTradeSize) {
@@ -47,7 +54,9 @@ contract TradeLimits is Ownable {
         }
     }
 
-    function recordAndValidateVolume(address trader, uint256 volume) external {
+    // =================== State mutations (onlyContango) ===================
+
+    function recordAndValidateVolume(address trader, uint256 volume) external onlyContango {
         if (maxDailyVolume == 0) return;
 
         VolumeData storage data = _volumeData[trader];
@@ -66,24 +75,33 @@ contract TradeLimits is Ownable {
         data.volume = newVolume;
     }
 
-    function incrementOpenPositions(address trader) external {
+    function incrementOpenPositions(address trader) external onlyContango {
         if (maxOpenPositions != 0 && openPositionCount[trader] >= maxOpenPositions) {
             revert MaxOpenPositionsExceeded(trader, maxOpenPositions);
         }
         openPositionCount[trader]++;
     }
 
-    function decrementOpenPositions(address trader) external {
+    function decrementOpenPositions(address trader) external onlyContango {
         if (openPositionCount[trader] > 0) {
             openPositionCount[trader]--;
         }
     }
+
+    // =================== View ===================
 
     function dailyVolume(address trader) external view returns (uint256) {
         VolumeData storage data = _volumeData[trader];
         uint256 currentEpoch = block.timestamp / 1 days;
         if (data.epoch != currentEpoch) return 0;
         return data.volume;
+    }
+
+    // =================== Modifiers ===================
+
+    modifier onlyContango() {
+        if (msg.sender != contango) revert OnlyContango();
+        _;
     }
 
 }

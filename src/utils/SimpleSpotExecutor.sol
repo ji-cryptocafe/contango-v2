@@ -39,6 +39,7 @@ contract SimpleSpotExecutor is SimpleSpotExecutorEvents, SimpleSpotExecutorError
 
         SafeERC20.forceApprove(tokenToSell, spender, amountIn);
         Address.functionCall(router, swapBytes);
+        SafeERC20.forceApprove(tokenToSell, spender, 0); // clear residual approval
 
         output = ERC20Lib.transferBalance(tokenToBuy, to);
         if (output < minAmountOut) revert InsufficientAmountOut(minAmountOut, output);

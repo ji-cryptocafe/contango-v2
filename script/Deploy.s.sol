@@ -83,6 +83,7 @@ contract Deploy is Script {
 
         // 4. Contango (main engine)
         contango = new Contango(positionNFT, vault, positionFactory, spotExecutor, accessGate, tradeLimits, timelock);
+        tradeLimits.setContango(address(contango));
 
         // 5. Maestro (user entry point)
         maestro = new Maestro(contango, vault, simpleSpotExecutor);

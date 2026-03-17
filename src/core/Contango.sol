@@ -62,6 +62,8 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
 
     bytes32 private callbackHash;
     bytes32 private tradeHash;
+    address private expectedCallbackSender;
+    bool private inFlash;
     mapping(PositionId positionId => address owner) public lastOwner;
     mapping(Symbol symbol => InstrumentStorage instrument) private instruments;
 
@@ -122,7 +124,7 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
         override
         returns (PositionId positionId, Trade memory trade_)
     {
-        _requireNotPaused();
+        if (tradeParams.quantity >= 0) _requireNotPaused(); // allow closures when paused
         accessGate.requireWhitelisted(onBehalfOf);
         tradeLimits.validateTradeSize(tradeParams.quantity > 0 ? uint256(tradeParams.quantity) : uint256(-tradeParams.quantity));
         tradeLimits.recordAndValidateVolume(onBehalfOf, execParams.swapAmount);
@@ -477,12 +479,18 @@ contract Contango is IContango, AccessControl, Pausable, Multicall {
         bytes memory data,
         function(address, address, address, uint256, uint256, bytes memory) external returns (bytes memory) callback
     ) private returns (bytes memory result) {
+        require(!inFlash, "Flash in progress");
         spotExecutor.routerGuard().validateFlashLoanProvider(address(provider));
+        inFlash = true;
+        expectedCallbackSender = address(provider);
         callbackHash = keccak256(data);
         result = provider.flash(loanReceiver, asset, amount, data, callback);
+        delete expectedCallbackSender;
+        inFlash = false;
     }
 
     function _flashLoanCallback(bytes memory data) internal returns (FlashLoanCallback memory) {
+        require(msg.sender == expectedCallbackSender, "Invalid callback sender");
         if (keccak256(data) != callbackHash) revert UnexpectedCallback();
         delete callbackHash;
         return data.decodeFlashLoanCallback();

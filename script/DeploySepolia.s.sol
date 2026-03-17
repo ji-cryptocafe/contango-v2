@@ -67,6 +67,7 @@ contract DeploySepolia is Script {
         // 4. Contango
         Contango contango =
             new Contango(positionNFT, vault, positionFactory, spotExecutor, accessGate, tradeLimits, timelock);
+        tradeLimits.setContango(address(contango));
 
         // 5. Maestro
         Maestro maestro = new Maestro(IContango(address(contango)), vault, simpleSpotExecutor);

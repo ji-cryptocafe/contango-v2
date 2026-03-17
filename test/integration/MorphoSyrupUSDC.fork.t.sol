@@ -67,6 +67,7 @@ contract MorphoForkTest is Test {
         SimpleSpotExecutor simpleSpotExecutor = new SimpleSpotExecutor(routerGuard);
 
         contango = new Contango(positionNFT, vault, positionFactory, spotExecutor, accessGate, tradeLimits, timelock);
+        tradeLimits.setContango(address(contango));
         maestro = new Maestro(IContango(address(contango)), vault, simpleSpotExecutor);
 
         // Roles
